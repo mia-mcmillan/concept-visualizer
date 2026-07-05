@@ -1,5 +1,8 @@
-// Deterministic per-concept color palettes. Same text always yields the same
-// palette; different concepts in the same category still read as a family.
+// Deterministic per-concept blueprint palettes. Same text always yields the
+// same palette; different concepts in the same category still read as a
+// family. Every palette stays inside the drafting-table blue/cyan/white
+// range — categories nudge the hue and which line tone dominates rather
+// than jumping around the color wheel the way a neon palette would.
 
 function hashString(str) {
   let h = 2166136261;
@@ -14,20 +17,21 @@ function hsl(h, s, l) {
   return `hsl(${Math.round(h)}, ${Math.round(s)}%, ${Math.round(l)}%)`;
 }
 
-// Base hue + spread per category, tuned so each metaphor has a coherent mood.
+// Base hue offset + spread per category, kept within a blueprint-blue band
+// (roughly cyan to indigo) so the whole app reads as one drafting system.
 const CATEGORY_HUE = {
-  cycle: { hue: 175, spread: 20 },
-  process: { hue: 28, spread: 18 },
-  network: { hue: 300, spread: 25 },
-  hierarchy: { hue: 40, spread: 15 },
-  growth: { hue: 140, spread: 20 },
-  balance: { hue: 268, spread: 18 },
-  orbit: { hue: 215, spread: 22 },
-  transformation: { hue: 320, spread: 25 },
-  layers: { hue: 24, spread: 20 },
-  wave: { hue: 195, spread: 22 },
-  connection: { hue: 165, spread: 20 },
-  abstract: { hue: 0, spread: 360 },
+  cycle: { hue: 190, spread: 10 },
+  process: { hue: 205, spread: 10 },
+  network: { hue: 225, spread: 12 },
+  hierarchy: { hue: 210, spread: 8 },
+  growth: { hue: 185, spread: 10 },
+  balance: { hue: 215, spread: 10 },
+  orbit: { hue: 220, spread: 12 },
+  transformation: { hue: 230, spread: 12 },
+  layers: { hue: 200, spread: 8 },
+  wave: { hue: 195, spread: 10 },
+  connection: { hue: 205, spread: 10 },
+  abstract: { hue: 210, spread: 20 },
 };
 
 export function getPalette(text, category) {
@@ -35,20 +39,25 @@ export function getPalette(text, category) {
   const cfg = CATEGORY_HUE[category] || CATEGORY_HUE.abstract;
   const jitter = (seed % 1000) / 1000; // 0..1
   const hue = (cfg.hue + (jitter - 0.5) * cfg.spread + 360) % 360;
-  const accentHue = (hue + 40 + (seed % 30)) % 360;
+  const lineHue = (hue + ((seed % 21) - 10) + 360) % 360;
 
   return {
     seed,
-    background: hsl(hue, 45, 4),
-    primary: hsl(hue, 85, 62),
-    secondary: hsl(accentHue, 80, 66),
-    tertiary: hsl((hue + 200) % 360, 70, 70),
-    particle: hsl(hue, 90, 78),
-    primaryHex: hslToHex(hue, 85, 62),
-    secondaryHex: hslToHex(accentHue, 80, 66),
-    tertiaryHex: hslToHex((hue + 200) % 360, 70, 70),
-    particleHex: hslToHex(hue, 90, 78),
-    fogHex: hslToHex(hue, 40, 3),
+    // Deep drafting-table blue the whole scene sits on.
+    background: hsl(hue, 58, 15),
+    // Crisp white/cyan linework — the "ink" the wireframes are drawn in.
+    primary: hsl(lineHue, 30, 93),
+    // Slightly cooler line tone for secondary parts of a scene.
+    secondary: hsl(lineHue, 45, 80),
+    // A warm highlighter accent, used sparingly for emphasis marks.
+    tertiary: hsl(38, 80, 68),
+    particle: hsl(lineHue, 25, 96),
+    primaryHex: hslToHex(lineHue, 30, 93),
+    secondaryHex: hslToHex(lineHue, 45, 80),
+    tertiaryHex: hslToHex(38, 80, 68),
+    particleHex: hslToHex(lineHue, 25, 96),
+    backgroundHex: hslToHex(hue, 58, 15),
+    fogHex: hslToHex(hue, 55, 12),
   };
 }
 

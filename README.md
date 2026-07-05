@@ -2,7 +2,8 @@
 
 Type any concept — "photosynthesis", "blockchain", "compound interest",
 "the water cycle" — and get back a detailed, animated 3D illustration that
-explains it.
+explains it, rendered as a blueprint-style technical schematic: deep blue
+background, white/cyan wireframe linework, and monospace annotations.
 
 ## How it works
 
@@ -17,9 +18,14 @@ picks a consistent color palette, so the same concept always looks the
 same, while different concepts in the same category still read as a
 family.
 
-Rendering: WebGL via Three.js, bloom post-processing (`UnrealBloomPass`),
-floating HTML/CSS labels (`CSS2DRenderer`) anchored to 3D nodes, and an
-orbit-controlled camera that auto-rotates.
+Rendering: WebGL via Three.js. Every scene is built with ordinary solid
+materials, then re-skinned by `applyBlueprintStyle` (`js/utils.js`) into
+the schematic look — solid meshes become near-invisible glass panes with
+crisp wireframe edges added on top, particles shrink into reference dots —
+so individual scene files don't need to know about the visual style. Subtle
+`UnrealBloomPass` post-processing, floating HTML/CSS annotation labels
+(`CSS2DRenderer`) anchored to 3D nodes, and an orbit-controlled camera that
+auto-rotates over a drafting-table grid.
 
 ## Running it
 
@@ -49,12 +55,13 @@ import maps require an HTTP(S) origin.
 
 ## Project structure
 
-- `index.html`, `style.css` — page shell, glassmorphism UI
+- `index.html`, `style.css` — page shell, blueprint/schematic UI
 - `js/main.js` — renderer/camera/lighting/post-processing setup, scene
   lifecycle, UI wiring
 - `js/classifier.js` — keyword → metaphor category classifier
-- `js/palette.js` — deterministic per-concept color palettes
-- `js/utils.js` — shared helpers (glow sprites, tubes, particle flows, noise)
+- `js/palette.js` — deterministic per-concept blueprint color palettes
+- `js/utils.js` — shared helpers (glow sprites, tubes, particle flows, noise,
+  and `applyBlueprintStyle`, the wireframe re-skin pass)
 - `js/label.js` — floating CSS2D label helper
 - `js/scenes/*.js` — one file per visual metaphor
 - `vendor/three/` — vendored Three.js core + the addon modules in use
