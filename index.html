@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Concept Visualizer — 3D Illustrator</title>
   <meta name="description" content="Type any concept and get a detailed, animated 3D illustration explaining it." />
-  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' rx='20' fill='%2305060a'/%3E%3Cpath d='M50 15 L80 50 L50 85 L20 50 Z' fill='%237fd8ff'/%3E%3C/svg%3E" />
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' rx='4' fill='%230a2647'/%3E%3Cpath d='M50 15 L80 50 L50 85 L20 50 Z' fill='none' stroke='%239fe0ff' stroke-width='4'/%3E%3C/svg%3E" />
   <link rel="stylesheet" href="style.css" />
   <script type="importmap">
     {
@@ -40,7 +40,7 @@
 
     <div id="chips" aria-label="Example concepts"></div>
 
-    <div id="caption" class="glass">
+    <div id="caption" class="panel">
       <div class="caption-top">
         <span id="caption-concept">—</span>
         <span id="caption-category" class="tag">—</span>
@@ -48,14 +48,14 @@
       <p id="caption-desc">Type a concept above and press Visualize to generate an animated 3D illustration.</p>
     </div>
 
-    <div id="toolbar" class="glass">
+    <div id="toolbar" class="panel">
       <button id="btn-shuffle" title="New variation" aria-label="New variation">⟲</button>
       <button id="btn-pause" title="Pause animation" aria-label="Pause animation">⏸</button>
       <button id="btn-motion" title="Reduce motion" aria-label="Toggle reduced motion">〰</button>
       <button id="btn-snapshot" title="Save snapshot" aria-label="Save snapshot">⇩</button>
     </div>
 
-    <div id="loading" class="glass hidden">
+    <div id="loading" class="panel hidden">
       <div class="spinner"></div>
       <span>Composing scene…</span>
     </div>

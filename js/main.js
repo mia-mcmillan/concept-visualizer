@@ -8,7 +8,7 @@ import { CSS2DRenderer } from "three/addons/renderers/CSS2DRenderer.js";
 
 import { classify, categoryMeta } from "./classifier.js";
 import { getPalette, seededRandom } from "./palette.js";
-import { createGlowTexture, disposeObject3D } from "./utils.js";
+import { createGlowTexture, disposeObject3D, applyBlueprintStyle } from "./utils.js";
 import { createLabel } from "./label.js";
 import { SCENE_BUILDERS } from "./scenes/index.js";
 
@@ -46,7 +46,8 @@ renderer.toneMapping = THREE.ACESFilmicToneMapping;
 renderer.toneMappingExposure = 1.0;
 
 const scene = new THREE.Scene();
-scene.fog = new THREE.FogExp2(0x05060a, 0.045);
+scene.background = new THREE.Color(0x0d2b4e);
+scene.fog = new THREE.FogExp2(0x0d2b4e, 0.045);
 
 const camera = new THREE.PerspectiveCamera(45, width / height, 0.1, 100);
 camera.position.set(0, 1.3, 7.2);
@@ -70,46 +71,39 @@ controls.autoRotate = true;
 controls.autoRotateSpeed = 0.6;
 controls.target.set(0, 0, 0);
 
-// Lighting rig — reused across scenes, retinted per concept.
-const ambient = new THREE.AmbientLight(0xffffff, 0.28);
-const hemi = new THREE.HemisphereLight(0x8fbfff, 0x0a0a12, 0.4);
-const keyLight = new THREE.DirectionalLight(0xffffff, 0.85);
+// Lighting rig — reused across scenes, retinted per concept. Kept dim since
+// most surfaces are near-transparent glass panes in the blueprint look;
+// the lines themselves are unlit.
+const ambient = new THREE.AmbientLight(0xffffff, 0.5);
+const hemi = new THREE.HemisphereLight(0x8fbfff, 0x0a0a12, 0.35);
+const keyLight = new THREE.DirectionalLight(0xffffff, 0.4);
 keyLight.position.set(4, 5, 3);
-const rimLight = new THREE.DirectionalLight(0xffffff, 0.4);
+const rimLight = new THREE.DirectionalLight(0xffffff, 0.25);
 rimLight.position.set(-4, -2, -4);
 scene.add(ambient, hemi, keyLight, rimLight);
 
-// Starfield backdrop, built once.
-scene.add(buildStarfield());
+// Drafting-table grid backdrop, built once, replaces the starfield.
+scene.add(buildDraftingGrid());
 
-function buildStarfield() {
-  const count = 1400;
-  const positions = new Float32Array(count * 3);
-  for (let i = 0; i < count; i++) {
-    const r = 25 + Math.random() * 20;
-    const phi = Math.acos(2 * Math.random() - 1);
-    const theta = Math.random() * Math.PI * 2;
-    positions[i * 3] = r * Math.sin(phi) * Math.cos(theta);
-    positions[i * 3 + 1] = r * Math.sin(phi) * Math.sin(theta);
-    positions[i * 3 + 2] = r * Math.cos(phi);
-  }
-  const geo = new THREE.BufferGeometry();
-  geo.setAttribute("position", new THREE.BufferAttribute(positions, 3));
-  const mat = new THREE.PointsMaterial({
-    size: 0.05,
-    color: 0xaabbff,
-    transparent: true,
-    opacity: 0.5,
-    sizeAttenuation: true,
-  });
-  return new THREE.Points(geo, mat);
+function buildDraftingGrid() {
+  const group = new THREE.Group();
+  const minor = new THREE.GridHelper(60, 60, 0x9fd8ff, 0x9fd8ff);
+  minor.material.transparent = true;
+  minor.material.opacity = 0.06;
+  minor.position.y = -3;
+  const major = new THREE.GridHelper(60, 12, 0xeaf6ff, 0xeaf6ff);
+  major.material.transparent = true;
+  major.material.opacity = 0.1;
+  major.position.y = -2.99;
+  group.add(minor, major);
+  return group;
 }
 
 const glowTexture = createGlowTexture(THREE);
 
 const composer = new EffectComposer(renderer);
 composer.addPass(new RenderPass(scene, camera));
-const bloomPass = new UnrealBloomPass(new THREE.Vector2(width, height), 0.5, 0.4, 0.3);
+const bloomPass = new UnrealBloomPass(new THREE.Vector2(width, height), 0.35, 0.35, 0.65);
 composer.addPass(bloomPass);
 composer.addPass(new OutputPass());
 
@@ -160,14 +154,16 @@ function visualize(rawText) {
 
     const builder = SCENE_BUILDERS[category] || SCENE_BUILDERS.abstract;
     const built = builder(THREE, { palette, rng, glowTexture, createLabel, concept: text });
+    applyBlueprintStyle(THREE, built.group, palette);
     scene.add(built.group);
     currentScene = built;
     sceneStartElapsed = clock.getElapsedTime();
 
+    scene.background.setHex(new THREE.Color(palette.backgroundHex).getHex());
     scene.fog.color.setHex(new THREE.Color(palette.fogHex).getHex());
     hemi.color.setHex(new THREE.Color(palette.primaryHex).getHex());
-    keyLight.color.setHex(new THREE.Color(palette.secondaryHex).getHex());
-    rimLight.color.setHex(new THREE.Color(palette.tertiaryHex).getHex());
+    keyLight.color.setHex(new THREE.Color(palette.primaryHex).getHex());
+    rimLight.color.setHex(new THREE.Color(palette.secondaryHex).getHex());
 
     captionConcept.textContent = text;
     captionCategory.textContent = meta.label;

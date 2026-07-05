@@ -100,6 +100,55 @@ export function flowParticlesAlongCurve(THREE, curve, count, colorHex, glowTextu
   return group;
 }
 
+// Re-skins a freshly built scene group into the blueprint/schematic look:
+// solid meshes become faint glass panes with crisp white/cyan wireframe
+// edges added as children (so they inherit the mesh's own animation),
+// particle points shrink into small reference dots, and glow sprites
+// shrink into highlighter-style accent marks. Existing object references
+// and hierarchy are left untouched so each scene's update() loop, which
+// closes over specific meshes, keeps working unmodified.
+export function applyBlueprintStyle(THREE, group, palette) {
+  const tmpColor = new THREE.Color();
+  const tmpHSL = { h: 0, s: 0, l: 0 };
+
+  group.traverse((child) => {
+    if (child.isMesh && child.geometry && child.material) {
+      const materials = Array.isArray(child.material) ? child.material : [child.material];
+      let lightest = 0;
+      for (const mat of materials) {
+        if (!mat.color) continue;
+        tmpColor.copy(mat.color);
+        tmpColor.getHSL(tmpHSL);
+        lightest = Math.max(lightest, tmpHSL.l);
+        mat.transparent = true;
+        mat.opacity = Math.min(mat.opacity ?? 1, 0.08);
+        if ("emissiveIntensity" in mat) mat.emissiveIntensity = 0;
+        if ("metalness" in mat) mat.metalness = 0;
+        if ("roughness" in mat) mat.roughness = 1;
+        mat.depthWrite = false;
+      }
+      const lineColor = lightest > 0.55 ? palette.primaryHex : palette.secondaryHex;
+      const edges = new THREE.EdgesGeometry(child.geometry, 25);
+      const lineMat = new THREE.LineBasicMaterial({
+        color: lineColor,
+        transparent: true,
+        opacity: 0.85,
+      });
+      const lines = new THREE.LineSegments(edges, lineMat);
+      lines.raycast = () => {};
+      child.add(lines);
+    } else if (child.isPoints) {
+      child.material.map = null;
+      child.material.color.set(palette.primaryHex);
+      child.material.size = Math.min(child.material.size, 0.045);
+      child.material.opacity = 0.9;
+      child.material.blending = THREE.NormalBlending;
+    } else if ((child.isLineSegments || child.isLine) && child.material && child.material.color) {
+      child.material.color.set(palette.primaryHex);
+    }
+  });
+}
+
 export function disposeObject3D(obj) {
   obj.traverse((child) => {
     if (child.geometry) child.geometry.dispose();
